@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BUCK</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#e5dfd3;--paper:#fdfbf7;--grid:#e2ded4;--grid2:#cbd2d9;
+      --ink:#2b2d42;--muted:#64748b;--blue:#2563eb;--blue2:#1d4ed8;
+      --green:#15803d;--red:#b91c1c;--shadow:rgba(0,0,0,.14)
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Patrick Hand',cursive,sans-serif;color:var(--ink);min-height:100vh;
+      background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.3),transparent 28%),
+                 radial-gradient(circle at 80% 70%,rgba(120,100,70,.07),transparent 30%),var(--bg);
+      padding:16px 10px 35px;font-size:18px
+    }
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .hidden{display:none!important}
+
+    /* LOGIN */
+    #authScreen{min-height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center}
+    .login-book{
+      width:min(430px,96vw);background:var(--paper);border:1px solid #d0c8b8;border-radius:9px;
+      box-shadow:0 20px 55px var(--shadow);padding:34px 34px 30px;position:relative;
+      background-image:linear-gradient(to right,var(--grid) 1px,transparent 1px),
+                       linear-gradient(to bottom,var(--grid) 1px,transparent 1px);
+      background-size:20px 20px
+    }
+    .login-book:before{content:"";position:absolute;left:18px;top:0;bottom:0;width:3px;background:rgba(148,163,184,.45)}
+    .login-logo{text-align:center;font-family:'Caveat';font-size:4rem;font-weight:700;letter-spacing:4px}
+    .login-sub{text-align:center;font-family:'Inter';font-size:.78rem;color:var(--muted);margin:0 0 24px}
+    .auth-tabs{display:flex;border-bottom:1px solid #cbd5e1;margin-bottom:18px}
+    .auth-tab{flex:1;padding:8px;border:0;background:transparent;color:#64748b;font-family:Inter;font-weight:600}
+    .auth-tab.active{color:var(--blue);border-bottom:2px solid var(--blue)}
+    .field{margin-bottom:13px}
+    .field label{display:block;font-family:Inter;font-size:.72rem;font-weight:600;color:#475569;margin-bottom:5px}
+    .field input{
+      width:100%;padding:10px 11px;border:1px solid #cbd5e1;border-radius:7px;
+      background:rgba(255,255,255,.7);outline:none;font-family:Inter;font-size:.85rem
+    }
+    .field input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+    .primary{width:100%;padding:10px;border:0;border-radius:7px;background:var(--blue);color:white;font-family:Inter;font-weight:700}
+    .primary:hover{background:var(--blue2)}
+    .auth-msg{font-family:Inter;font-size:.73rem;margin-top:10px;text-align:center;min-height:18px}
+    .auth-note{font-family:Inter;font-size:.65rem;color:#94a3b8;text-align:center;margin-top:14px;line-height:1.5}
+
+    /* APP HEADER */
+    .controls-header{
+      width:100%;max-width:1180px;margin:0 auto 12px;background:rgba(255,255,255,.94);
+      padding:10px 14px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.06);
+      font-family:Inter;display:flex;align-items:center;justify-content:space-between;gap:10px
+    }
+    .brand{display:flex;align-items:center;gap:9px;min-width:150px}
+    .brand strong{font-size:1.15rem;letter-spacing:1px}
+    .user-area{display:flex;align-items:center;gap:7px}
+    .user-name{font-size:.72rem;color:#64748b}
+    .calendar-controls{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+    .nav-btn,.today-btn,.stats-btn,.logout-btn{
+      border:0;border-radius:7px;font-family:Inter;font-weight:600;transition:.18s
+    }
+    .nav-btn{width:34px;height:34px;background:#eef2f7;color:#334155;font-size:1.1rem}
+    .today-btn,.stats-btn{padding:8px 10px;background:#f1f5f9;color:#334155;font-size:.72rem}
+    .stats-btn{background:#e0e7ff;color:#3730a3}
+    .logout-btn{padding:8px 10px;background:#fef2f2;color:#991b1b;font-size:.72rem}
+    .nav-btn:hover,.today-btn:hover,.stats-btn:hover,.logout-btn:hover{filter:brightness(.96);transform:translateY(-1px)}
+    #monthPicker{height:34px;border:1px solid #cbd5e1;border-radius:7px;background:white;padding:0 7px;font-family:Inter;font-size:.78rem}
+
+    /* BOOK */
+    .notebook{
+      display:flex;width:100%;max-width:1180px;margin:0 auto;background:var(--paper);border:1px solid #d0c8b8;
+      border-radius:8px;box-shadow:0 18px 45px var(--shadow),0 2px 5px rgba(0,0,0,.08);
+      position:relative;overflow:hidden;isolation:isolate
+    }
+    .notebook:before{
+      content:"";position:absolute;left:50%;top:0;bottom:0;width:22px;transform:translateX(-50%);
+      background:linear-gradient(to right,rgba(0,0,0,.04),rgba(0,0,0,.13) 25%,rgba(0,0,0,.22) 46%,rgba(255,255,255,.4) 50%,rgba(0,0,0,.17) 57%,rgba(0,0,0,.04));
+      z-index:10;pointer-events:none
+    }
+    .page{
+      flex:1;min-width:0;min-height:790px;padding:28px 30px 25px;position:relative;
+      background-image:linear-gradient(to right,var(--grid) 1px,transparent 1px),
+                       linear-gradient(to bottom,var(--grid) 1px,transparent 1px);
+      background-size:20px 20px
+    }
+    .page-left{border-right:1px solid var(--grid2);padding-right:42px}
+    .page-right{padding-left:42px}
+    .month-title{
+      font-family:'Caveat';font-size:clamp(2.4rem,4vw,3.35rem);font-weight:700;letter-spacing:2px;
+      text-transform:uppercase;color:#1e293b;border:0;background:transparent;width:100%;outline:none;line-height:1
+    }
+    .mantra-box{margin-top:8px;display:flex;align-items:baseline;gap:10px}
+    .mantra-label{font-weight:bold;text-transform:uppercase;letter-spacing:1px;font-size:1.05rem;color:#475569;border-bottom:2px solid var(--ink)}
+    .mantra-input{border:0;background:transparent;font-family:'Patrick Hand';font-size:1.22rem;flex:1;outline:none;color:var(--ink);min-width:0}
+    .section-title{font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin:18px 0 9px;font-size:1.08rem;color:#334155;display:inline-block;border-bottom:2px solid var(--ink)}
+    .events-table{width:100%;border-collapse:collapse;margin-top:6px}
+    .events-table td{height:25px;vertical-align:middle;padding:0 4px}
+    .events-table .day-num{width:32px;text-align:right;padding-right:12px;font-weight:bold;color:#475569;border-right:1.5px solid var(--ink);user-select:none}
+    .events-table .day-text{padding-left:10px}
+    .events-table input{width:100%;border:0;background:transparent;font-family:'Patrick Hand';font-size:1.08rem;outline:none;color:var(--ink)}
+    .events-table input:focus{border-bottom:1px solid #cbd5e1}
+    .tracker-container{overflow-x:auto;padding-bottom:6px}
+    .tracker-table{
+      border-collapse:collapse;
+      margin-top:5px;
+      width:100%;
+      table-layout:fixed;
+      min-width:400px;
+    }
+    .tracker-table th,
+    .tracker-table td{
+      border:1px solid #94a3b8;
+      text-align:center;
+      height:22px;
+      padding:0 2px;
+    }
+    .tracker-table th.habit-header{
+      writing-mode:vertical-rl;
+      transform:rotate(180deg);
+      padding:4px 2px;
+      font-size:.7rem;
+      font-weight:600;
+      white-space:nowrap;
+      height:90px;
+      vertical-align:bottom;
+      min-width:28px;
+      max-width:40px;
+      background:#f8f6f0;
+    }
+    .tracker-table th.habit-header input{
+      border:0;
+      background:transparent;
+      font-family:'Patrick Hand';
+      font-size:.72rem;
+      outline:none;
+      width:100%;
+      color:var(--ink);
+      text-align:center;
+    }
+    .tracker-table td.day-row{
+      width:28px;
+      font-weight:bold;
+      font-size:.78rem;
+      background:rgba(255,255,255,.5);
+      min-width:24px;
+    }
+    .tracker-table td.cell-check{
+      width:24px;
+      min-width:20px;
+      cursor:pointer;
+      user-select:none;
+      font-family:'Caveat';
+      font-size:1rem;
+      font-weight:bold;
+      color:#0f172a;
+      padding:0;
+    }
+    .tracker-table td.cell-check:hover{background:rgba(254,240,138,.55)}
+    .tracker-table td.cell-check.checked{background:rgba(254,240,138,.3)}
+    .weekend{background:rgba(148,163,184,.055)!important}
+    .objectives-section{margin-top:16px;background:rgba(255,255,255,.43);padding:13px 14px;border:1px dashed #94a3b8;border-radius:6px}
+    .objectives-title{font-weight:bold;font-size:1rem;margin-bottom:9px;color:#334155}
+    .objective-item{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+    .obj-checkbox{width:16px;height:16px;cursor:pointer;accent-color:var(--ink);flex-shrink:0}
+    .obj-input{border:0;border-bottom:1px solid #cbd5e1;background:transparent;font-family:'Patrick Hand';font-size:1rem;flex:1;outline:none;color:var(--ink)}
+    .obj-input.done{text-decoration:line-through;opacity:.58}
+    .habit-add{margin-top:8px;display:flex;gap:7px}
+    .habit-add input{flex:1;border:0;border-bottom:1px dashed #94a3b8;background:transparent;outline:none;font-family:'Patrick Hand';font-size:.95rem}
+    .mini-btn{border:1px solid #94a3b8;background:rgba(255,255,255,.5);border-radius:6px;padding:3px 8px;font-family:Inter;font-size:.62rem;font-weight:600;color:#334155;white-space:nowrap}
+    .mini-btn:hover{background:#e2e8f0}
+    .delete-btn{
+      background:transparent;
+      border:0;
+      color:#991b1b;
+      font-size:.6rem;
+      padding:0 2px;
+      font-weight:bold;
+      cursor:pointer;
+      line-height:1;
+    }
+    .delete-btn:hover{color:#b91c1c;transform:scale(1.3)}
+    .habit-header-wrapper{
+      display:flex;
+      align-items:center;
+      gap:1px;
+      justify-content:center;
+      flex-direction:column;
+      height:100%;
+      width:100%;
+    }
+    .habit-header-wrapper input{
+      width:100%;
+      font-size:.7rem !important;
+      padding:0 1px;
+    }
+    .book-footer{
+      position:absolute;
+      bottom:7px;
+      left:30px;
+      right:30px;
+      display:flex;
+      justify-content:space-between;
+      color:#64748b;
+      font-size:.75rem;
+      pointer-events:none
+    }
+    .page-right .book-footer{left:42px}
+    .calendar-status{
+      position:absolute;
+      top:10px;
+      right:28px;
+      font-family:Inter;
+      font-size:.55rem;
+      color:#94a3b8;
+      letter-spacing:.4px
+    }
+    .sim-badge{background:#fef3c7;color:#92400e;font-size:.5rem;padding:2px 8px;border-radius:10px;font-family:Inter;font-weight:600;margin-left:6px}
+
+    /* STATS */
+    #statsPanel{width:100%;max-width:1180px;margin:0 auto}
+    .stats-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;font-family:Inter}
+    .stats-head h2{font-size:1rem;color:#334155}
+    .back-btn{border:0;background:white;border-radius:7px;padding:7px 10px;font-size:.7rem;font-weight:600;color:#334155}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+    .stat-card{background:rgba(255,255,255,.94);border-radius:9px;padding:13px 15px;box-shadow:0 4px 14px rgba(0,0,0,.06);font-family:Inter}
+    .stat-card span{display:block;color:#64748b;font-size:.65rem;margin-bottom:5px}
+    .stat-card strong{font-size:1.35rem;color:#1e293b}
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .chart-card{background:var(--paper);border:1px solid #d0c8b8;border-radius:8px;padding:15px;box-shadow:0 7px 18px rgba(0,0,0,.07)}
+    .chart-card h3{font-family:Inter;font-size:.78rem;color:#334155;margin-bottom:8px}
+    canvas{width:100%;height:200px;display:block}
+    .stats-select{float:right;border:1px solid #cbd5e1;border-radius:5px;font-family:Inter;font-size:.68rem;padding:3px}
+
+    @media(max-width:900px){
+      .controls-header{flex-direction:column;align-items:stretch}.brand,.user-area{justify-content:center}
+      .notebook{flex-direction:column}.notebook:before{display:none}.page{min-height:auto}
+      .page-left{border-right:0;border-bottom:2px dashed #cbd5e1;padding-right:24px}
+      .page-right{padding-left:24px}.charts{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:560px){
+      body{padding:7px 5px 20px}.calendar-controls{gap:4px}.page,.page-left,.page-right{padding-left:14px;padding-right:14px}
+      .month-title{font-size:2rem}.mantra-box{align-items:flex-start;flex-direction:column;gap:2px}.book-footer{left:14px;right:14px}.page-right .book-footer{left:14px}
+      .stats-grid{grid-template-columns:1fr 1fr}
+      .tracker-table th.habit-header{font-size:.6rem;height:70px;min-width:22px}
+      .tracker-table th.habit-header input{font-size:.6rem !important}
+      .tracker-table td.day-row{font-size:.65rem;min-width:18px}
+      .tracker-table td.cell-check{font-size:.8rem;min-width:16px}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <section id="authScreen">
+    <div class="login-book">
+      <div class="login-logo">BUCK</div>
+      <div class="login-sub">Tu espacio personal</div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="loginTab" onclick="showAuth('login')">Iniciar sesión</button>
+        <button class="auth-tab" id="registerTab" onclick="showAuth('register')">Crear cuenta</button>
+      </div>
+
+      <form id="authForm" onsubmit="handleAuth(event)">
+        <div class="field" id="nameField" style="display:none">
+          <label>Nombre</label>
+          <input id="authName" type="text" autocomplete="name" placeholder="Tu nombre">
+        </div>
+        <div class="field">
+          <label>Correo</label>
+          <input id="authEmail" type="text" autocomplete="username" required placeholder="admin">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input id="authPassword" type="password" autocomplete="current-password" required minlength="4" placeholder="1234">
+        </div>
+        <button class="primary" id="authSubmit" type="submit">Entrar a BUCK</button>
+        <div class="auth-msg" id="authMsg"></div>
+      </form>
+
+      <div class="auth-note">
+        🔑 Usuario: <strong>admin</strong> · Contraseña: <strong>1234</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- APP -->
+  <main id="app" class="hidden">
+    <div class="controls-header">
+      <div class="brand"><span style="font-size:1.3rem">📖</span><strong>BUCK</strong></div>
+
+      <div class="calendar-controls">
+        <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+        <input id="monthPicker" type="month" onchange="goToSelectedMonth()">
+        <button class="nav-btn" onclick="changeMonth(1)">›</button>
+        <button class="today-btn" onclick="goToToday()">Hoy</button>
+        <button class="stats-btn" onclick="showStats()">Estadísticas</button>
+      </div>
+
+      <div class="user-area">
+        <span class="user-name" id="userName"></span>
+        <button class="logout-btn" onclick="logout()">Salir</button>
+      </div>
+    </div>
+
+    <div id="plannerView">
+      <div class="notebook">
+        <div class="page page-left">
+          <div class="calendar-status" id="calendarStatus"></div>
+
+          <div class="header-section">
+            <input id="monthTitle" class="month-title" value="" oninput="saveCurrentMonth()">
+            <div class="mantra-box">
+              <span class="mantra-label">MANTRA:</span>
+              <input id="mantraInput" class="mantra-input" placeholder="Escribe tu mantra..." oninput="saveCurrentMonth()">
+            </div>
+          </div>
+
+          <div class="section-title">HECHOS RELEVANTES:</div>
+          <table class="events-table"><tbody id="eventsTableBody"></tbody></table>
+
+          <div class="book-footer"><span>BUCK</span><span>01</span></div>
+        </div>
+
+        <div class="page page-right">
+          <div class="tracker-container">
+            <table class="tracker-table">
+              <thead><tr id="trackerHeader"></tr></thead>
+              <tbody id="trackerTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="habit-add">
+            <input id="newHabitInput" placeholder="+ Agregar hábito..." onkeydown="if(event.key==='Enter')addHabit()">
+            <button class="mini-btn" onclick="addHabit()">Agregar</button>
+          </div>
+
+          <div class="objectives-section">
+            <div class="objectives-title">🎯 3 Objetivos del mes:</div>
+            <div class="objective-item">
+              <input type="checkbox" id="objCheck1" class="obj-checkbox" onchange="saveCurrentMonth();updateObjectiveStyle(1)">
+              <input type="text" id="objText1" class="obj-input" placeholder="Objetivo 1..." oninput="saveCurrentMonth()">
+            </div>
+            <div class="objective-item">
+              <input type="checkbox" id="objCheck2" class="obj-checkbox" onchange="saveCurrentMonth();updateObjectiveStyle(2)">
+              <input type="text" id="objText2" class="obj-input" placeholder="Objetivo 2..." oninput="saveCurrentMonth()">
+            </div>
+            <div class="objective-item">
+              <input type="checkbox" id="objCheck3" class="obj-checkbox" onchange="saveCurrentMonth();updateObjectiveStyle(3)">
+              <input type="text" id="objText3" class="obj-input" placeholder="Objetivo 3..." oninput="saveCurrentMonth()">
+            </div>
+          </div>
+
+          <div class="book-footer"><span id="monthSummary">0 hábitos marcados</span><span>02</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="statsPanel" class="hidden">
+      <div class="stats-head">
+        <h2>Estadísticas de BUCK</h2>
+        <button class="back-btn" onclick="hideStats()">← Volver al libro</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><span>Hábitos marcados este mes</span><strong id="statMonthChecks">0</strong></div>
+        <div class="stat-card"><span>Constancia del mes</span><strong id="statMonthRate">0%</strong></div>
+        <div class="stat-card"><span>Mejor hábito del mes</span><strong id="statBestHabit">—</strong></div>
+        <div class="stat-card"><span>Objetivos completados</span><strong id="statObjectives">0/3</strong></div>
+      </div>
+
+      <div class="charts">
+        <div class="chart-card">
+          <h3>Constancia por hábito · <span id="chartMonthLabel"></span></h3>
+          <canvas id="habitChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>
+            Actividad durante el año
+            <select id="yearStats" class="stats-select" onchange="drawStats()"></select>
+          </h3>
+          <canvas id="yearChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<script>
+  const AUTH_KEY = 'buckAccounts_v2';
+  const SESSION_KEY = 'buckSession_v2';
+  const DATA_KEY = 'buckUserData_v2';
+  const DEFAULT_HABITS = ["Rutina","Programar","Modelar","Editar","Gym","Leer","Ducha","Meditar","Estirar","Comer"];
+  const MONTHS=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+  let authMode='login', currentYear, currentMonth, currentUser=null;
+  let isSimulation = false;
+
+  function pad(n){return String(n).padStart(2,'0')}
+  function monthKey(y,m){return `${y}-${pad(m+1)}`}
+  function getAccounts(){try{return JSON.parse(localStorage.getItem(AUTH_KEY))||{}}catch{return{}}}
+  function setAccounts(v){localStorage.setItem(AUTH_KEY,JSON.stringify(v))}
+  function getAllUserData(){try{return JSON.parse(localStorage.getItem(DATA_KEY))||{}}catch{return{}}}
+  function setAllUserData(v){localStorage.setItem(DATA_KEY,JSON.stringify(v))}
+  function safeEmail(v){return v.trim().toLowerCase()}
+  async function hashPassword(text){
+    const data=new TextEncoder().encode(text);
+    const hash=await crypto.subtle.digest('SHA-256',data);
+    return [...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  function showAuth(mode){
+    authMode=mode;
+    document.getElementById('loginTab').classList.toggle('active',mode==='login');
+    document.getElementById('registerTab').classList.toggle('active',mode==='register');
+    document.getElementById('nameField').style.display=mode==='register'?'block':'none';
+    document.getElementById('authName').required=mode==='register';
+    document.getElementById('authSubmit').textContent=mode==='register'?'Crear mi cuenta':'Entrar a BUCK';
+    document.getElementById('authMsg').textContent='';
+  }
+
+  async function handleAuth(e){
+    e.preventDefault();
+    const email=document.getElementById('authEmail').value.trim();
+    const password=document.getElementById('authPassword').value;
+    const msg=document.getElementById('authMsg');
+
+    if(email === 'admin' && password === '1234') {
+      const accounts=getAccounts();
+      if(!accounts['admin']) {
+        accounts['admin'] = {name: 'Administrador', password: await hashPassword('1234')};
+        setAccounts(accounts);
+      }
+      currentUser = 'admin';
+      localStorage.setItem(SESSION_KEY, 'admin');
+      openApp();
+      return;
+    }
+
+    msg.style.color='var(--red)';
+    msg.textContent='❌ Usuario: admin | Contraseña: 1234';
+  }
+
+  function logout(){
+    saveCurrentMonth(false);
+    localStorage.removeItem(SESSION_KEY);
+    currentUser=null;
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
+    document.getElementById('authForm').reset();
+    document.getElementById('authMsg').textContent='';
+    showAuth('login');
+  }
+
+  function openApp(){
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    const accounts=getAccounts();
+    document.getElementById('userName').textContent=accounts[currentUser]?.name||currentUser;
+    const now=new Date();
+    currentYear=now.getFullYear();currentMonth=now.getMonth();
+    
+    // Siempre ir a septiembre para la simulación
+    currentYear = 2026;
+    currentMonth = 8; // Septiembre
+    
+    // Crear datos de simulación si no existen
+    createSimulationData();
+    
+    renderMonth();
+  }
+
+  function createSimulationData(){
+    const all=getAllUserData();
+    const key='2026-09';
+    if(all[currentUser] && all[currentUser][key]) return; // Ya existe
+    
+    const d = {
+      monthTitle: "SEPTIEMBRE 2026",
+      mantra: "Código limpio, mente clara, cuerpo fuerte 💪",
+      events: {
+        1: "Planificación proyecto 3D",
+        3: "Reunión equipo desarrollo",
+        7: "Entrega assets 3D",
+        10: "Edición showreel Q3",
+        14: "Code review",
+        17: "Personaje principal listo",
+        20: "Grabación tutorial",
+        24: "Presentación al cliente",
+        28: "Cierre de sprint",
+        30: "Resumen del mes"
+      },
+      habits: ["Rutina","Programar","Modelar","Editar","Gym","Leer","Ducha","Meditar","Estirar","Comer"],
+      checks: {},
+      objectives: {
+        t1: "Terminar el modelado 3D del personaje principal",
+        c1: true,
+        t2: "Editar y publicar el showreel de Q3",
+        c2: true,
+        t3: "Mantener rutina de ejercicio 4 días/semana",
+        c3: false
+      }
+    };
+
+    const days = 30;
+    for(let day=1; day<=days; day++){
+      d.checks[`${day}_0`] = true; // Rutina
+      d.checks[`${day}_6`] = true; // Ducha
+      d.checks[`${day}_8`] = true; // Estirar
+      
+      const date = new Date(2026, 8, day);
+      const weekday = date.getDay();
+      if(weekday >= 1 && weekday <= 5){
+        d.checks[`${day}_1`] = true; // Programar
+        d.checks[`${day}_5`] = true; // Leer
+        d.checks[`${day}_9`] = true; // Comer
+      } else {
+        d.checks[`${day}_4`] = true; // Gym
+        d.checks[`${day}_7`] = true; // Meditar
+      }
+      
+      if([2,5,8,12,15,19,22,26,29].includes(day)){
+        d.checks[`${day}_2`] = true; // Modelar
+      }
+      if([3,6,10,13,17,20,24,27].includes(day)){
+        d.checks[`${day}_3`] = true; // Editar
+      }
+      if([1,3,5,7,10,12,14,17,19,21,24,26,28].includes(day)){
+        d.checks[`${day}_4`] = true; // Gym
+      }
+      if(weekday === 0 || weekday === 6){
+        d.checks[`${day}_7`] = true; // Meditar
+      }
+    }
+
+    if(!all[currentUser]) all[currentUser] = {};
+    all[currentUser][key] = d;
+    setAllUserData(all);
+    isSimulation = true;
+  }
+
+  function defaultData(y,m){
+    const days=new Date(y,m+1,0).getDate(),events={};
+    for(let d=1;d<=days;d++)events[d]='';
+    return {
+      monthTitle:`${MONTHS[m]} ${y}`,
+      mantra:"La suerte es del que sale a buscarla",
+      events,
+      habits:[...DEFAULT_HABITS],
+      checks:{},
+      objectives:{t1:'',c1:false,t2:'',c2:false,t3:'',c3:false}
+    };
+  }
+
+  function getUserStore(){
+    const all=getAllUserData();
+    if(!all[currentUser])all[currentUser]={};
+    return all;
+  }
+
+  function getCurrentData(){
+    const all=getUserStore(),key=monthKey(currentYear,currentMonth);
+    if(!all[currentUser][key])all[currentUser][key]=defaultData(currentYear,currentMonth);
+    const d=all[currentUser][key];
+    if(!Array.isArray(d.habits)||!d.habits.length)d.habits=[...DEFAULT_HABITS];
+    if(!d.events)d.events={};if(!d.checks)d.checks={};
+    if(!d.objectives)d.objectives={t1:'',c1:false,t2:'',c2:false,t3:'',c3:false};
+    setAllUserData(all);
+    return d;
+  }
+
+  function renderMonth(){
+    const d=getCurrentData(),days=new Date(currentYear,currentMonth+1,0).getDate();
+    document.getElementById('monthPicker').value=`${currentYear}-${pad(currentMonth+1)}`;
+    document.getElementById('monthTitle').value=d.monthTitle||`${MONTHS[currentMonth]} ${currentYear}`;
+    document.getElementById('mantraInput').value=d.mantra||'';
+    renderEvents(days,d);
+    renderTracker(days,d);
+    renderObjectives(d);
+    updateSummary(d);
+    document.getElementById('calendarStatus').textContent=`CALENDARIO · ${MONTHS[currentMonth]} ${currentYear}`;
+  }
+
+  function renderEvents(days,d){
+    const body=document.getElementById('eventsTableBody');body.innerHTML='';
+    for(let day=1;day<=days;day++){
+      const date=new Date(currentYear,currentMonth,day),weekend=date.getDay()===0||date.getDay()===6;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="day-num ${weekend?'weekend':''}">${day}</td><td class="day-text"><input id="event_${day}" value="${escapeHtml(d.events[day]||'')}" oninput="saveCurrentMonth()"></td>`;
+      body.appendChild(tr);
+    }
+  }
+
+  function renderTracker(days,d){
+    const h=document.getElementById('trackerHeader'),b=document.getElementById('trackerTableBody');
+    h.innerHTML='<th style="width:28px;min-width:24px;"></th>';
+    d.habits.forEach((habit,i)=>{
+      const th=document.createElement('th');th.className='habit-header';
+      const wrapper=document.createElement('div');
+      wrapper.className='habit-header-wrapper';
+      const input=document.createElement('input');
+      input.value=habit;
+      input.id=`habit_${i}`;
+      input.addEventListener('input',saveCurrentMonth);
+      wrapper.appendChild(input);
+      const delBtn=document.createElement('button');
+      delBtn.className='delete-btn';
+      delBtn.textContent='✕';
+      delBtn.title='Eliminar hábito';
+      delBtn.onclick=(e)=>{e.stopPropagation();deleteHabit(i);};
+      wrapper.appendChild(delBtn);
+      th.appendChild(wrapper);
+      h.appendChild(th);
+    });
+    b.innerHTML='';
+    for(let day=1;day<=days;day++){
+      const tr=document.createElement('tr'),date=new Date(currentYear,currentMonth,day),weekend=date.getDay()===0||date.getDay()===6;
+      let cells=`<td class="day-row ${weekend?'weekend':''}">${day}</td>`;
+      d.habits.forEach((_,i)=>{const checked=!!d.checks[`${day}_${i}`];cells+=`<td class="cell-check ${checked?'checked':''}" id="check_${day}_${i}" onclick="toggleCheck(${day},${i})">${checked?'✕':''}</td>`});
+      tr.innerHTML=cells;b.appendChild(tr);
+    }
+  }
+
+  function renderObjectives(d){
+    [1,2,3].forEach(i=>{
+      document.getElementById(`objText${i}`).value=d.objectives[`t${i}`]||'';
+      document.getElementById(`objCheck${i}`).checked=!!d.objectives[`c${i}`];
+      updateObjectiveStyle(i);
+    });
+  }
+
+  function deleteHabit(index){
+    if(!confirm('¿Eliminar este hábito?'))return;
+    const d=getCurrentData();
+    d.habits.splice(index,1);
+    const newChecks={};
+    Object.keys(d.checks).forEach(k=>{
+      const parts=k.split('_');
+      const i=parseInt(parts[1]);
+      if(i<index)newChecks[k]=d.checks[k];
+      else if(i>index)newChecks[`${parts[0]}_${i-1}`]=d.checks[k];
+    });
+    d.checks=newChecks;
+    const all=getAllUserData();
+    all[currentUser][monthKey(currentYear,currentMonth)]=d;
+    setAllUserData(all);
+    renderMonth();
+  }
+
+  function toggleCheck(day,i){
+    const cell=document.getElementById(`check_${day}_${i}`);if(!cell)return;
+    const checked=cell.textContent.trim()==='✕';
+    cell.textContent=checked?'':'✕';cell.classList.toggle('checked',!checked);
+    saveCurrentMonth();updateSummary();
+  }
+
+  function addHabit(){
+    const input=document.getElementById('newHabitInput'),name=input.value.trim();if(!name)return;
+    const d=getCurrentData();
+    if(d.habits.some(h=>h.toLowerCase()===name.toLowerCase())){input.value='';return}
+    d.habits.push(name);
+    const all=getAllUserData();all[currentUser][monthKey(currentYear,currentMonth)]=d;setAllUserData(all);
+    input.value='';renderMonth();
+  }
+
+  function saveCurrentMonth(show=true){
+    if(!currentUser)return;
+    const all=getAllUserData(),key=monthKey(currentYear,currentMonth),old=all[currentUser]?.[key]||defaultData(currentYear,currentMonth);
+    const days=new Date(currentYear,currentMonth+1,0).getDate(),d={
+      monthTitle:document.getElementById('monthTitle').value,
+      mantra:document.getElementById('mantraInput').value,
+      events:{},
+      habits:[],
+      checks:{},
+      objectives:{
+        t1:document.getElementById('objText1').value,c1:document.getElementById('objCheck1').checked,
+        t2:document.getElementById('objText2').value,c2:document.getElementById('objCheck2').checked,
+        t3:document.getElementById('objText3').value,c3:document.getElementById('objCheck3').checked
+      }
+    };
+    for(let day=1;day<=days;day++){
+      const e=document.getElementById(`event_${day}`);d.events[day]=e?e.value:(old.events?.[day]||'');
+    }
+    document.querySelectorAll('#trackerHeader input').forEach(i=>d.habits.push(i.value.trim()||'Sin nombre'));
+    for(let day=1;day<=days;day++)for(let i=0;i<d.habits.length;i++){
+      const cell=document.getElementById(`check_${day}_${i}`);if(cell?.textContent.trim()==='✕')d.checks[`${day}_${i}`]=true;
+    }
+    if(!all[currentUser])all[currentUser]={};all[currentUser][key]=d;setAllUserData(all);
+    updateSummary(d);
+    if(show){
+      document.getElementById('calendarStatus').textContent='GUARDADO';
+      clearTimeout(window.saveTimer);window.saveTimer=setTimeout(()=>document.getElementById('calendarStatus').textContent=`CALENDARIO · ${MONTHS[currentMonth]} ${currentYear}`,700);
+    }
+  }
+
+  function updateSummary(d=getCurrentData()){
+    const count=Object.values(d.checks||{}).filter(Boolean).length;
+    document.getElementById('monthSummary').textContent=`${count} ${count===1?'hábito marcado':'hábitos marcados'}`;
+  }
+
+  function updateObjectiveStyle(i){
+    const c=document.getElementById(`objCheck${i}`),t=document.getElementById(`objText${i}`);
+    t.classList.toggle('done',c.checked);
+  }
+
+  function changeMonth(delta){
+    saveCurrentMonth(false);
+    const dt=new Date(currentYear,currentMonth+delta,1);
+    currentYear=dt.getFullYear();currentMonth=dt.getMonth();
+    if(currentYear !== 2026 || currentMonth !== 8) isSimulation = false;
+    renderMonth();
+  }
+  
+  function goToToday(){
+    saveCurrentMonth(false);
+    const n=new Date();
+    currentYear=n.getFullYear();
+    currentMonth=n.getMonth();
+    if(currentYear !== 2026 || currentMonth !== 8) isSimulation = false;
+    renderMonth();
+  }
+  
+  function goToSelectedMonth(){
+    saveCurrentMonth(false);
+    const v=document.getElementById('monthPicker').value;
+    if(!v)return;
+    const [y,m]=v.split('-').map(Number);
+    currentYear=y;
+    currentMonth=m-1;
+    if(currentYear !== 2026 || currentMonth !== 8) isSimulation = false;
+    renderMonth();
+  }
+
+  function showStats(){
+    saveCurrentMonth(false);
+    document.getElementById('plannerView').classList.add('hidden');
+    document.getElementById('statsPanel').classList.remove('hidden');
+    populateYears();drawStats();
+  }
+  function hideStats(){
+    document.getElementById('statsPanel').classList.add('hidden');
+    document.getElementById('plannerView').classList.remove('hidden');
+  }
+
+  function populateYears(){
+    const select=document.getElementById('yearStats'),all=getAllUserData()[currentUser]||{},years=new Set([currentYear]);
+    Object.keys(all).forEach(k=>years.add(Number(k.slice(0,4))));
+    select.innerHTML=[...years].sort((a,b)=>b-a).map(y=>`<option value="${y}" ${y===currentYear?'selected':''}>${y}</option>`).join('');
+  }
+
+  function drawStats(){
+    const d=getCurrentData(),days=new Date(currentYear,currentMonth+1,0).getDate();
+    const total=Object.keys(d.checks).filter(k=>d.checks[k]).length;
+    const possible=days*d.habits.length;
+    const rate=possible?Math.round(total/possible*100):0;
+    const counts=d.habits.map((_,i)=>Object.keys(d.checks).filter(k=>k.endsWith(`_${i}`)&&d.checks[k]).length);
+    const bestIndex=counts.indexOf(Math.max(...counts));
+    const objDone=[1,2,3].filter(i=>d.objectives?.[`c${i}`]).length;
+
+    document.getElementById('statMonthChecks').textContent=total;
+    document.getElementById('statMonthRate').textContent=`${rate}%`;
+    document.getElementById('statBestHabit').textContent=d.habits[bestIndex]||'—';
+    document.getElementById('statObjectives').textContent=`${objDone}/3`;
+    document.getElementById('chartMonthLabel').textContent=`${MONTHS[currentMonth]} ${currentYear}`;
+
+    drawBarChart(document.getElementById('habitChart'),d.habits,counts);
+    drawYearChart(Number(document.getElementById('yearStats').value));
+  }
+
+  function setupCanvas(canvas){
+    const ratio=window.devicePixelRatio||1,w=canvas.clientWidth||500,h=canvas.clientHeight||200;
+    canvas.width=w*ratio;canvas.height=h*ratio;
+    const ctx=canvas.getContext('2d');ctx.setTransform(ratio,0,0,ratio,0,0);return{ctx,w,h};
+  }
+
+  function drawBarChart(canvas,labels,values){
+    const {ctx,w,h}=setupCanvas(canvas);ctx.clearRect(0,0,w,h);
+    const left=38,right=8,top=14,bottom=38,max=Math.max(1,...values),plotW=w-left-right,plotH=h-top-bottom;
+    ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;ctx.font='10px Inter, sans-serif';ctx.fillStyle='#64748b';
+    for(let i=0;i<=4;i++){const y=top+plotH-i*plotH/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();ctx.fillText(Math.round(max*i/4),5,y+3)}
+    const bw=Math.max(6,plotW/labels.length*.5),gap=plotW/labels.length;
+    values.forEach((v,i)=>{
+      const x=left+i*gap+(gap-bw)/2,y=top+plotH-(v/max)*plotH;
+      ctx.fillStyle='#475569';ctx.fillRect(x,y,bw,(v/max)*plotH);
+      ctx.fillStyle='#334155';ctx.textAlign='center';ctx.fillText(String(v),x+bw/2,y-3);
+      ctx.save();ctx.translate(x+bw/2,h-8);ctx.rotate(-Math.PI/4);ctx.fillStyle='#64748b';
+      let label=labels[i];if(label.length>10)label=label.slice(0,9)+'…';ctx.fillText(label,0,0);ctx.restore();
+    });
+    ctx.textAlign='left';
+  }
+
+  function drawYearChart(year){
+    const all=getAllUserData()[currentUser]||{},values=[];
+    for(let m=0;m<12;m++){
+      const d=all[monthKey(year,m)];
+      values.push(d?Object.values(d.checks||{}).filter(Boolean).length:0);
+    }
+    const canvas=document.getElementById('yearChart'),{ctx,w,h}=setupCanvas(canvas);ctx.clearRect(0,0,w,h);
+    const left=34,right=10,top=14,bottom=30,plotW=w-left-right,plotH=h-top-bottom,max=Math.max(1,...values);
+    ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;ctx.font='9px Inter, sans-serif';ctx.fillStyle='#64748b';
+    for(let i=0;i<=4;i++){const y=top+plotH-i*plotH/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();ctx.fillText(Math.round(max*i/4),3,y+3)}
+    ctx.beginPath();
+    values.forEach((v,i)=>{
+      const x=left+(plotW/11)*i,y=top+plotH-(v/max)*plotH;
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    });
+    ctx.strokeStyle='#334155';ctx.lineWidth=2;ctx.stroke();
+    values.forEach((v,i)=>{
+      const x=left+(plotW/11)*i,y=top+plotH-(v/max)*plotH;
+      ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fillStyle='#334155';ctx.fill();
+      ctx.fillStyle='#64748b';ctx.textAlign='center';ctx.fillText(MONTHS[i].slice(0,3),x,h-8);
+    });
+    ctx.textAlign='left';
+  }
+
+  function escapeHtml(v){
+    return String(v).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  }
+
+  window.addEventListener('resize',()=>{if(!document.getElementById('statsPanel').classList.contains('hidden'))drawStats()});
+  window.addEventListener('beforeunload',()=>saveCurrentMonth(false));
+
+  (function boot(){
+    const session=localStorage.getItem(SESSION_KEY);
+    if(session && getAccounts()[session]){
+      currentUser=session;openApp();
+    }else{
+      document.getElementById('authScreen').classList.remove('hidden');
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('authMsg').textContent='';
+    }
+  })();
+</script>
+</body>
+</html>
